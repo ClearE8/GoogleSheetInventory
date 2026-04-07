@@ -115,7 +115,6 @@
        ============================================================ */
       .main {
         padding: 20px 24px;
-        max-width: 1300px;
         margin: 0 auto;
       }
 
@@ -657,7 +656,6 @@
       <div class="modal">
         <h2 id="modalTitle">Add item</h2>
         <div class="form-grid">
-
           <!-- Stock info -->
           <div class="field full">
             <label>Item name *</label>
@@ -669,14 +667,34 @@
           </div>
           <div class="field">
             <label>Type</label>
-            <select id="fType" style="width:100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface);">
+            <select
+              id="fType"
+              style="
+                width: 100%;
+                padding: 8px 10px;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                font-size: 14px;
+                background: var(--surface);
+              "
+            >
               <option value="Inventory Item">Inventory Item</option>
               <option value="Asset">Asset</option>
             </select>
           </div>
           <div class="field">
             <label>Condition</label>
-            <select id="fCondition" style="width:100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface);">
+            <select
+              id="fCondition"
+              style="
+                width: 100%;
+                padding: 8px 10px;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                font-size: 14px;
+                background: var(--surface);
+              "
+            >
               <option value="Unknown">Unknown</option>
               <option value="New">New</option>
               <option value="Used - Working">Used - Working</option>
@@ -685,7 +703,11 @@
           </div>
           <div class="field">
             <label>Unit</label>
-            <input id="fUnit" type="text" placeholder="e.g. Each, Package, Box…" />
+            <input
+              id="fUnit"
+              type="text"
+              placeholder="e.g. Each, Package, Box…"
+            />
           </div>
           <div class="field">
             <label>SKU / Code</label>
@@ -751,7 +773,6 @@
             <label>Notes</label>
             <input id="fNotes" type="text" placeholder="Optional" />
           </div>
-
         </div>
         <div class="modal-actions">
           <button class="btn" onclick="closeModal()">Cancel</button>
@@ -776,7 +797,7 @@
         "https://script.google.com/macros/s/AKfycbzHi2tpqGVLGt2dp4zgfIesw0h0i7G8A62yzm0-dMEDw86i0ojspylu81fsX0hl5HNJ/exec";
 
       // ── App state ────────────────────────────────────────────────
-      let items = [];     // local mirror of the Sheet data
+      let items = []; // local mirror of the Sheet data
       let editingId = null; // null = adding new, string = editing existing
 
       // ============================================================
@@ -1047,21 +1068,21 @@
       // ============================================================
 
       function clearForm() {
-        document.getElementById("fName").value         = "";
-        document.getElementById("fType").value         = "Inventory Item";
-        document.getElementById("fCondition").value    = "Unknown";
-        document.getElementById("fUnit").value         = "Each";
-        document.getElementById("fSKU").value          = "";
-        document.getElementById("fMPN").value          = "";
-        document.getElementById("fLoc").value          = "";
-        document.getElementById("fQty").value          = 0;
-        document.getElementById("fMin").value          = 1;
-        document.getElementById("fUnitCost").value     = "";
+        document.getElementById("fName").value = "";
+        document.getElementById("fType").value = "Inventory Item";
+        document.getElementById("fCondition").value = "Unknown";
+        document.getElementById("fUnit").value = "Each";
+        document.getElementById("fSKU").value = "";
+        document.getElementById("fMPN").value = "";
+        document.getElementById("fLoc").value = "";
+        document.getElementById("fQty").value = 0;
+        document.getElementById("fMin").value = 1;
+        document.getElementById("fUnitCost").value = "";
         document.getElementById("fManufacturer").value = "";
-        document.getElementById("fSupplier1").value    = "";
-        document.getElementById("fSupplier2").value    = "";
-        document.getElementById("fUrl").value          = "";
-        document.getElementById("fNotes").value        = "";
+        document.getElementById("fSupplier1").value = "";
+        document.getElementById("fSupplier2").value = "";
+        document.getElementById("fUrl").value = "";
+        document.getElementById("fNotes").value = "";
       }
 
       function openAdd() {
@@ -1078,21 +1099,23 @@
         if (!item) return;
 
         document.getElementById("modalTitle").textContent = "Edit item";
-        document.getElementById("fName").value         = item.name         || "";
-        document.getElementById("fType").value         = item.type         || "Inventory Item";
-        document.getElementById("fCondition").value    = item.condition    || "Unknown";
-        document.getElementById("fUnit").value         = item.unit         || "Each";
-        document.getElementById("fSKU").value          = item.sku          || "";
-        document.getElementById("fMPN").value          = item.mpn          || "";
-        document.getElementById("fLoc").value          = item.location     || "";
-        document.getElementById("fQty").value          = item.qty;
-        document.getElementById("fMin").value          = item.min;
-        document.getElementById("fUnitCost").value     = item.unitCost     || "";
-        document.getElementById("fManufacturer").value = item.manufacturer || "";
-        document.getElementById("fSupplier1").value    = item.supplier1    || "";
-        document.getElementById("fSupplier2").value    = item.supplier2    || "";
-        document.getElementById("fUrl").value          = item.url          || "";
-        document.getElementById("fNotes").value        = item.notes        || "";
+        document.getElementById("fName").value = item.name || "";
+        document.getElementById("fType").value = item.type || "Inventory Item";
+        document.getElementById("fCondition").value =
+          item.condition || "Unknown";
+        document.getElementById("fUnit").value = item.unit || "Each";
+        document.getElementById("fSKU").value = item.sku || "";
+        document.getElementById("fMPN").value = item.mpn || "";
+        document.getElementById("fLoc").value = item.location || "";
+        document.getElementById("fQty").value = item.qty;
+        document.getElementById("fMin").value = item.min;
+        document.getElementById("fUnitCost").value = item.unitCost || "";
+        document.getElementById("fManufacturer").value =
+          item.manufacturer || "";
+        document.getElementById("fSupplier1").value = item.supplier1 || "";
+        document.getElementById("fSupplier2").value = item.supplier2 || "";
+        document.getElementById("fUrl").value = item.url || "";
+        document.getElementById("fNotes").value = item.notes || "";
 
         document.getElementById("overlay").classList.add("open");
       }
@@ -1110,20 +1133,21 @@
 
         const payload = {
           name,
-          type:         document.getElementById("fType").value,
-          condition:    document.getElementById("fCondition").value,
-          unit:         document.getElementById("fUnit").value.trim() || "Each",
-          sku:          document.getElementById("fSKU").value.trim(),
-          mpn:          document.getElementById("fMPN").value.trim(),
-          location:     document.getElementById("fLoc").value.trim(),
-          qty:          parseInt(document.getElementById("fQty").value) || 0,
-          min:          parseInt(document.getElementById("fMin").value) || 1,
-          unitCost:     parseFloat(document.getElementById("fUnitCost").value) || "",
+          type: document.getElementById("fType").value,
+          condition: document.getElementById("fCondition").value,
+          unit: document.getElementById("fUnit").value.trim() || "Each",
+          sku: document.getElementById("fSKU").value.trim(),
+          mpn: document.getElementById("fMPN").value.trim(),
+          location: document.getElementById("fLoc").value.trim(),
+          qty: parseInt(document.getElementById("fQty").value) || 0,
+          min: parseInt(document.getElementById("fMin").value) || 1,
+          unitCost:
+            parseFloat(document.getElementById("fUnitCost").value) || "",
           manufacturer: document.getElementById("fManufacturer").value.trim(),
-          supplier1:    document.getElementById("fSupplier1").value.trim(),
-          supplier2:    document.getElementById("fSupplier2").value.trim(),
-          url:          document.getElementById("fUrl").value.trim(),
-          notes:        document.getElementById("fNotes").value.trim(),
+          supplier1: document.getElementById("fSupplier1").value.trim(),
+          supplier2: document.getElementById("fSupplier2").value.trim(),
+          url: document.getElementById("fUrl").value.trim(),
+          notes: document.getElementById("fNotes").value.trim(),
         };
 
         const saveBtn = document.getElementById("saveBtn");
