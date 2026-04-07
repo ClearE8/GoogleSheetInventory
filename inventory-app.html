@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inventory Manager</title>
+  <style>
+
+    /* ============================================================
+       DESIGN TOKENS
+       Change these variables to restyle the whole app at once.
+       ============================================================ */
+    :root {
+      --bg:           #f8f9fa;
+      --surface:      #ffffff;
+      --surface2:     #f1f3f4;
+      --border:       #dadce0;
+      --text:         #202124;
+      --muted:        #5f6368;
+      --accent:       #1a73e8;
+      --accent-light: #e8f0fe;
+      --green:        #188038;
+      --green-bg:     #e6f4ea;
+      --amber:        #b06000;
+      --amber-bg:     #fef7e0;
+      --red:          #c5221f;
+      --red-bg:       #fce8e6;
+      --radius:       8px;
+      --radius-lg:    12px;
+    }
+
+    /* ============================================================
+       RESET
+       ============================================================ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    /* ============================================================
+       TOP BAR
+       ============================================================ */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar h1 {
+      font-size: 18px;
+      font-weight: 500;
+    }
+
+    /* ── Sync status pill ── */
+    .sync-pill {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ccc;
+      flex-shrink: 0;
+    }
+
+    .dot.ok   { background: var(--green); }
+    .dot.err  { background: var(--red); }
+    .dot.spin { background: var(--amber); animation: pulse 1s infinite; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+
+    /* ============================================================
+       SETUP BANNER
+       Shown on first visit until the user connects their Sheet.
+       ============================================================ */
+    .banner {
+      background: var(--accent-light);
+      border: 1px solid #aecbfa;
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin: 20px 24px 0;
+    }
+
+    .banner h2 {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .banner ol {
+      color: #174ea6;
+      font-size: 13px;
+      line-height: 1.9;
+      padding-left: 18px;
+      margin-bottom: 4px;
+    }
+
+    .banner .url-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .banner .url-row input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 1px solid #aecbfa;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-family: monospace;
+      background: #fff;
+    }
+
+    .banner .url-row input:focus {
+      outline: 2px solid var(--accent);
+    }
+
+    .banner .reset-link {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+      display: block;
+    }
+
+    /* ============================================================
+       MAIN CONTENT AREA
+       ============================================================ */
+    .main {
+      padding: 20px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Inline error banner ── */
+    .error-banner {
+      display: none;
+      background: var(--red-bg);
+      border: 1px solid #f5c6c6;
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      color: var(--red);
+      font-size: 13px;
+    }
+
+    /* ============================================================
+       STAT CARDS  (row of summary numbers at the top)
+       ============================================================ */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 14px 16px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 26px;
+      font-weight: 500;
+    }
+
+    /* ============================================================
+       TOOLBAR  (search + filter + buttons)
+       ============================================================ */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar input[type="text"] {
+      flex: 1;
+      min-width: 180px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: var(--surface);
+    }
+
+    .toolbar input[type="text"]:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      background: var(--surface);
+    }
+
+    /* ── Generic button styles ── */
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      transition: background 0.15s;
+    }
+
+    .btn:hover {
+      background: var(--surface2);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #1557b0;
+    }
+
+    /* ============================================================
+       INVENTORY TABLE
+       ============================================================ */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background: #f8f9fa;
+    }
+
+    /* Monospace font for SKU codes */
+    .mono {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 12px;
+    }
+
+    /* Location pill */
+    .loc {
+      font-weight: 500;
+      background: var(--surface2);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    /* ── Quantity +/- controls ── */
+    .qty-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .qty-btn {
+      width: 26px;
+      height: 26px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .qty-btn:hover    { background: var(--surface2); }
+    .qty-btn:disabled { opacity: 0.4; cursor: default; }
+
+    .qty-num {
+      min-width: 30px;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    /* ── Status badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .badge-ok  { background: var(--green-bg); color: var(--green); }
+    .badge-low { background: var(--amber-bg); color: var(--amber); }
+    .badge-out { background: var(--red-bg);   color: var(--red); }
+
+    /* ── Per-row edit/delete buttons (appear on hover) ── */
+    .row-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    tr:hover .row-actions {
+      opacity: 1;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 4px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .icon-btn:hover      { background: var(--surface2); color: var(--text); }
+    .icon-btn.del:hover  { background: var(--red-bg);   color: var(--red); }
+
+    /* Empty state */
+    .empty-row td {
+      text-align: center;
+      padding: 40px;
+      color: var(--muted);
+    }
+
+    /* ============================================================
+       ADD / EDIT MODAL
+       ============================================================ */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.35);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .overlay.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: min(460px, 95vw);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+    }
+
+    .modal h2 {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 18px;
+    }
+
+    /* Two-column form layout */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .form-grid .full {
+      grid-column: 1 / -1;
+    }
+
+    .field label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 14px;
+    }
+
+    .field input:focus {
+      outline: 2px solid var(--accent);
+      border-color: transparent;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    /* ── Spinner shown while saving ── */
+    .spinner {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       TOP BAR
+       ============================================================ -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <!-- Google-coloured grid icon -->
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="#1a73e8"/>
+        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="#34a853"/>
+        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="#fbbc04"/>
+        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#ea4335"/>
+      </svg>
+      <h1>Inventory Manager</h1>
+    </div>
+
+    <div class="sync-pill">
+      <div class="dot" id="dot"></div>
+      <span id="syncText">Not connected</span>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       SETUP BANNER
+       Hidden once the user has saved their Script URL.
+       ============================================================ -->
+  <div class="banner" id="banner">
+    <h2>⚙️ One-time setup — connect your Google Sheet</h2>
+    <ol>
+      <li>Create or open a Google Sheet</li>
+      <li>Go to <strong>Extensions → Apps Script</strong></li>
+      <li>Delete any existing code, paste everything from <strong>Code.gs</strong>, and save (Ctrl+S)</li>
+      <li>Click <strong>Deploy → New deployment → Web app</strong></li>
+      <li>Set <em>Execute as:</em> <strong>Me</strong> &nbsp;·&nbsp; <em>Who has access:</em> <strong>Anyone</strong></li>
+      <li>Click Deploy → authorize → copy the <strong>Web App URL</strong></li>
+    </ol>
+    <div class="url-row">
+      <input type="text" id="urlInput" placeholder="https://script.google.com/macros/s/.../exec">
+      <button class="btn btn-primary" onclick="connectSheet()">Connect</button>
+    </div>
+    <a class="reset-link" href="#" onclick="clearUrl()">Reset saved URL</a>
+  </div>
+
+
+  <!-- ============================================================
+       MAIN CONTENT
+       ============================================================ -->
+  <div class="main">
+
+    <!-- Inline error messages -->
+    <div class="error-banner" id="errBanner"></div>
+
+    <!-- Stat cards -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Total items</div>
+        <div class="stat-value" id="sTotal">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Total units</div>
+        <div class="stat-value" id="sUnits">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Low stock</div>
+        <div class="stat-value" id="sLow">—</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Out of stock</div>
+        <div class="stat-value" id="sOut">—</div>
+      </div>
+    </div>
+
+    <!-- Search / filter / action toolbar -->
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="Search name, SKU, location…" oninput="renderTable()">
+      <select id="filterStatus" onchange="renderTable()">
+        <option value="">All status</option>
+        <option value="ok">In stock</option>
+        <option value="low">Low stock</option>
+        <option value="out">Out of stock</option>
+      </select>
+      <button class="btn" onclick="loadItems()">↻ Refresh</button>
+      <button class="btn btn-primary" onclick="openAdd()">+ Add item</button>
+    </div>
+
+    <!-- Inventory table -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>SKU</th>
+            <th>Location</th>
+            <th>Qty</th>
+            <th>Min</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr class="empty-row">
+            <td colspan="8">Connect your Google Sheet to get started.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /.main -->
+
+
+  <!-- ============================================================
+       ADD / EDIT MODAL
+       ============================================================ -->
+  <div class="overlay" id="overlay" onclick="if (event.target === this) closeModal()">
+    <div class="modal">
+      <h2 id="modalTitle">Add item</h2>
+      <div class="form-grid">
+        <div class="field full">
+          <label>Item name *</label>
+          <input id="fName" type="text" placeholder="e.g. M8 Hex Bolts (100pk)">
+        </div>
+        <div class="field">
+          <label>SKU / Code</label>
+          <input id="fSKU" type="text" placeholder="BLT-M8-100">
+        </div>
+        <div class="field">
+          <label>Pallet / Bin location</label>
+          <input id="fLoc" type="text" placeholder="P3-B12">
+        </div>
+        <div class="field">
+          <label>Quantity</label>
+          <input id="fQty" type="number" min="0" value="0">
+        </div>
+        <div class="field">
+          <label>Low stock threshold</label>
+          <input id="fMin" type="number" min="0" value="5">
+        </div>
+        <div class="field full">
+          <label>Notes</label>
+          <input id="fNotes" type="text" placeholder="Optional">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">Save</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+  <script>
+
+    // ── State ────────────────────────────────────────────────────
+    // SCRIPT_URL is saved in localStorage so users only paste it once.
+    let SCRIPT_URL = localStorage.getItem('inv_script_url') || '';
+    let items      = [];    // local copy of inventory fetched from the Sheet
+    let editingId  = null;  // null = adding new, string = editing existing
+
+    // ── On load ──────────────────────────────────────────────────
+    // Hide the setup banner and load data if we already have a URL saved.
+    if (SCRIPT_URL) {
+      document.getElementById('banner').style.display = 'none';
+      document.getElementById('urlInput').value = SCRIPT_URL;
+      loadItems();
+    }
+
+
+    // ============================================================
+    //  SETUP: save / clear the Apps Script URL
+    // ============================================================
+
+    function connectSheet() {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url.includes('script.google.com')) {
+        showError('Please paste a valid Apps Script Web App URL.');
+        return;
+      }
+      SCRIPT_URL = url;
+      localStorage.setItem('inv_script_url', url);
+      document.getElementById('banner').style.display = 'none';
+      loadItems();
+    }
+
+    function clearUrl() {
+      localStorage.removeItem('inv_script_url');
+      SCRIPT_URL = '';
+      document.getElementById('banner').style.display = 'block';
+      document.getElementById('urlInput').value = '';
+    }
+
+
+    // ============================================================
+    //  SYNC INDICATOR
+    // ============================================================
+
+    function setSync(state, text) {
+      document.getElementById('dot').className = 'dot ' + state;
+      document.getElementById('syncText').textContent = text;
+    }
+
+
+    // ============================================================
+    //  ERROR DISPLAY
+    // ============================================================
+
+    function showError(msg) {
+      const banner = document.getElementById('errBanner');
+      banner.textContent = msg;
+      banner.style.display = 'block';
+      setTimeout(() => { banner.style.display = 'none'; }, 6000);
+    }
+
+
+    // ============================================================
+    //  API — all requests use GET + URL parameters
+    //
+    //  Why GET and not POST?
+    //  Google Apps Script blocks POST requests from other origins
+    //  (CORS preflight fails). GET requests work without any
+    //  preflight, so we encode everything as query parameters.
+    // ============================================================
+
+    async function api(params) {
+      if (!SCRIPT_URL) {
+        showError('Connect your Google Sheet first.');
+        return null;
+      }
+
+      setSync('spin', 'Syncing…');
+
+      const queryString = new URLSearchParams(params).toString();
+      const url         = SCRIPT_URL + '?' + queryString;
+
+      try {
+        const response = await fetch(url, { redirect: 'follow' });
+
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+          throw new Error(data.error);
+        }
+
+        setSync('ok', 'Synced · ' + new Date().toLocaleTimeString());
+        return data;
+
+      } catch (err) {
+        setSync('err', 'Sync error — check connection');
+        showError(
+          'Could not reach Google Sheets: ' + err.message +
+          '. Make sure the Web App is deployed with "Anyone" access ' +
+          'and that you have re-deployed after any code changes.'
+        );
+        return null;
+      }
+    }
+
+
+    // ============================================================
+    //  LOAD ALL ITEMS FROM THE SHEET
+    // ============================================================
+
+    async function loadItems() {
+      setSync('spin', 'Loading…');
+      const data = await api({ action: 'getAll' });
+      if (data) {
+        items = data.items || [];
+        renderTable();
+      }
+    }
+
+
+    // ============================================================
+    //  RENDER THE TABLE
+    // ============================================================
+
+    // Returns 'ok', 'low', or 'out' for a given item.
+    function getStatus(qty, min) {
+      if (qty === 0)    return 'out';
+      if (qty < min)    return 'low';
+      return 'ok';
+    }
+
+    const STATUS_LABELS = {
+      ok:  'In stock',
+      low: 'Low stock',
+      out: 'Out of stock',
+    };
+
+    function updateStats() {
+      const total = items.length;
+      const units = items.reduce((sum, i) => sum + i.qty, 0);
+      const low   = items.filter(i => getStatus(i.qty, i.min) === 'low').length;
+      const out   = items.filter(i => getStatus(i.qty, i.min) === 'out').length;
+
+      document.getElementById('sTotal').textContent = total;
+      document.getElementById('sUnits').textContent = units.toLocaleString();
+      document.getElementById('sLow').textContent   = low;
+      document.getElementById('sOut').textContent   = out;
+    }
+
+    function renderTable() {
+      const searchQuery  = document.getElementById('search').value.toLowerCase();
+      const statusFilter = document.getElementById('filterStatus').value;
+
+      const filtered = items.filter(item => {
+        // Search across name, SKU, and location
+        const matchesSearch = !searchQuery || [item.name, item.sku, item.location]
+          .some(field => (field || '').toLowerCase().includes(searchQuery));
+
+        // Filter by status badge
+        const matchesFilter = !statusFilter || getStatus(item.qty, item.min) === statusFilter;
+
+        return matchesSearch && matchesFilter;
+      });
+
+      const tbody = document.getElementById('tbody');
+
+      if (!filtered.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No items found.</td></tr>';
+        updateStats();
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        const s = getStatus(item.qty, item.min);
+        return `
+          <tr>
+            <td>${esc(item.name)}</td>
+            <td class="mono">${esc(item.sku) || '—'}</td>
+            <td><span class="loc">${esc(item.location) || '—'}</span></td>
+            <td>
+              <div class="qty-wrap">
+                <button class="qty-btn" onclick="changeQty('${item.id}', -1)" ${item.qty <= 0 ? 'disabled' : ''}>−</button>
+                <span class="qty-num">${item.qty}</span>
+                <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+              </div>
+            </td>
+            <td>${item.min}</td>
+            <td><span class="badge badge-${s}">${STATUS_LABELS[s]}</span></td>
+            <td style="color: var(--muted); font-size: 13px;">${esc(item.notes) || ''}</td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-btn" title="Edit" onclick="openEdit('${item.id}')">✎</button>
+                <button class="icon-btn del" title="Delete" onclick="deleteItem('${item.id}')">✕</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      updateStats();
+    }
+
+    // Escape user-supplied strings before inserting into HTML
+    function esc(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+
+    // ============================================================
+    //  QUANTITY CHANGE  (the +/- buttons on each row)
+    // ============================================================
+
+    async function changeQty(id, delta) {
+      // Update local state immediately so the UI feels instant
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      item.qty = Math.max(0, item.qty + delta);
+      renderTable();
+
+      // Then sync to the Sheet in the background
+      await api({ action: 'updateQty', id, delta });
+
+      // Reload to confirm the Sheet's actual value
+      loadItems();
+    }
+
+
+    // ============================================================
+    //  DELETE ITEM
+    // ============================================================
+
+    async function deleteItem(id) {
+      if (!confirm('Delete this item from inventory?')) return;
+
+      // Remove from local state immediately
+      items = items.filter(i => i.id !== id);
+      renderTable();
+
+      // Sync deletion to the Sheet
+      await api({ action: 'delete', id });
+    }
+
+
+    // ============================================================
+    //  ADD / EDIT MODAL
+    // ============================================================
+
+    function openAdd() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add item';
+
+      // Clear all fields
+      document.getElementById('fName').value  = '';
+      document.getElementById('fSKU').value   = '';
+      document.getElementById('fLoc').value   = '';
+      document.getElementById('fQty').value   = 0;
+      document.getElementById('fMin').value   = 5;
+      document.getElementById('fNotes').value = '';
+
+      document.getElementById('overlay').classList.add('open');
+      setTimeout(() => document.getElementById('fName').focus(), 50);
+    }
+
+    function openEdit(id) {
+      editingId = id;
+      const item = items.find(x => x.id === id);
+      if (!item) return;
+
+      document.getElementById('modalTitle').textContent = 'Edit item';
+      document.getElementById('fName').value  = item.name     || '';
+      document.getElementById('fSKU').value   = item.sku      || '';
+      document.getElementById('fLoc').value   = item.location || '';
+      document.getElementById('fQty').value   = item.qty;
+      document.getElementById('fMin').value   = item.min;
+      document.getElementById('fNotes').value = item.notes    || '';
+
+      document.getElementById('overlay').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('overlay').classList.remove('open');
+    }
+
+    async function saveItem() {
+      const name = document.getElementById('fName').value.trim();
+      if (!name) {
+        showError('Item name is required.');
+        return;
+      }
+
+      const payload = {
+        name,
+        sku:      document.getElementById('fSKU').value.trim(),
+        location: document.getElementById('fLoc').value.trim(),
+        qty:      parseInt(document.getElementById('fQty').value)  || 0,
+        min:      parseInt(document.getElementById('fMin').value)  || 5,
+        notes:    document.getElementById('fNotes').value.trim(),
+      };
+
+      // Show saving state
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.innerHTML = '<span class="spinner"></span> Saving';
+      saveBtn.disabled  = true;
+
+      closeModal();
+
+      if (editingId) {
+        await api({ action: 'update', id: editingId, ...payload });
+      } else {
+        await api({ action: 'add', ...payload });
+      }
+
+      // Reset button and reload
+      saveBtn.textContent = 'Save';
+      saveBtn.disabled    = false;
+      loadItems();
+    }
+
+  </script>
+</body>
+</html>
