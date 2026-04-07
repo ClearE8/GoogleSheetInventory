@@ -1,859 +1,966 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inventory Manager</title>
-  <style>
-
-    /* ============================================================
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory Manager</title>
+    <style>
+      /* ============================================================
        DESIGN TOKENS — edit these to restyle the whole app
        ============================================================ */
-    :root {
-      --bg:           #f8f9fa;
-      --surface:      #ffffff;
-      --surface2:     #f1f3f4;
-      --border:       #dadce0;
-      --text:         #202124;
-      --muted:        #5f6368;
-      --accent:       #1a73e8;
-      --accent-light: #e8f0fe;
-      --green:        #188038;
-      --green-bg:     #e6f4ea;
-      --amber:        #b06000;
-      --amber-bg:     #fef7e0;
-      --red:          #c5221f;
-      --red-bg:       #fce8e6;
-      --radius:       8px;
-      --radius-lg:    12px;
-    }
+      :root {
+        --bg: #f8f9fa;
+        --surface: #ffffff;
+        --surface2: #f1f3f4;
+        --border: #dadce0;
+        --text: #202124;
+        --muted: #5f6368;
+        --accent: #1a73e8;
+        --accent-light: #e8f0fe;
+        --green: #188038;
+        --green-bg: #e6f4ea;
+        --amber: #b06000;
+        --amber-bg: #fef7e0;
+        --red: #c5221f;
+        --red-bg: #fce8e6;
+        --radius: 8px;
+        --radius-lg: 12px;
+      }
 
-    /* ============================================================
+      /* ============================================================
        RESET
        ============================================================ */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: 'Google Sans', Roboto, Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 14px;
-    }
+      body {
+        font-family: "Google Sans", Roboto, Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        font-size: 14px;
+      }
 
-    /* ============================================================
+      /* ============================================================
        TOP BAR
        ============================================================ */
-    .topbar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 24px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 10;
-    }
+      .topbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 24px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
 
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+      .topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
 
-    .topbar h1 {
-      font-size: 18px;
-      font-weight: 500;
-    }
+      .topbar h1 {
+        font-size: 18px;
+        font-weight: 500;
+      }
 
-    .sync-pill {
-      font-size: 12px;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 10px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-    }
+      .sync-pill {
+        font-size: 12px;
+        color: var(--muted);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 20px;
+      }
 
-    .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #ccc;
-      flex-shrink: 0;
-    }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ccc;
+        flex-shrink: 0;
+      }
 
-    .dot.ok   { background: var(--green); }
-    .dot.err  { background: var(--red); }
-    .dot.spin { background: var(--amber); animation: pulse 1s infinite; }
+      .dot.ok {
+        background: var(--green);
+      }
+      .dot.err {
+        background: var(--red);
+      }
+      .dot.spin {
+        background: var(--amber);
+        animation: pulse 1s infinite;
+      }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.35; }
-    }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.35;
+        }
+      }
 
-    /* ============================================================
+      /* ============================================================
        MAIN CONTENT
        ============================================================ */
-    .main {
-      padding: 20px 24px;
-      max-width: 1300px;
-      margin: 0 auto;
-    }
+      .main {
+        padding: 20px 24px;
+        max-width: 1300px;
+        margin: 0 auto;
+      }
 
-    .error-banner {
-      display: none;
-      background: var(--red-bg);
-      border: 1px solid #f5c6c6;
-      border-radius: var(--radius);
-      padding: 10px 14px;
-      margin-bottom: 14px;
-      color: var(--red);
-      font-size: 13px;
-    }
+      .error-banner {
+        display: none;
+        background: var(--red-bg);
+        border: 1px solid #f5c6c6;
+        border-radius: var(--radius);
+        padding: 10px 14px;
+        margin-bottom: 14px;
+        color: var(--red);
+        font-size: 13px;
+      }
 
-    /* ============================================================
+      /* ============================================================
        STAT CARDS
        ============================================================ */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+      }
 
-    .stat {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 14px 16px;
-    }
+      .stat {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 14px 16px;
+      }
 
-    .stat-label {
-      font-size: 11px;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 4px;
-    }
+      .stat-label {
+        font-size: 11px;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 4px;
+      }
 
-    .stat-value {
-      font-size: 26px;
-      font-weight: 500;
-    }
+      .stat-value {
+        font-size: 26px;
+        font-weight: 500;
+      }
 
-    /* ============================================================
+      /* ============================================================
        TOOLBAR
        ============================================================ */
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
+      .toolbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
 
-    .toolbar input[type="text"] {
-      flex: 1;
-      min-width: 180px;
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-      background: var(--surface);
-    }
+      .toolbar input[type="text"] {
+        flex: 1;
+        min-width: 180px;
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+        background: var(--surface);
+      }
 
-    .toolbar input[type="text"]:focus {
-      outline: 2px solid var(--accent);
-      border-color: transparent;
-    }
+      .toolbar input[type="text"]:focus {
+        outline: 2px solid var(--accent);
+        border-color: transparent;
+      }
 
-    select {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-      background: var(--surface);
-    }
+      select {
+        padding: 8px 12px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+        background: var(--surface);
+      }
 
-    .btn {
-      padding: 8px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-      cursor: pointer;
-      background: var(--surface);
-      color: var(--text);
-      transition: background 0.15s;
-    }
+      .btn {
+        padding: 8px 16px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+        cursor: pointer;
+        background: var(--surface);
+        color: var(--text);
+        transition: background 0.15s;
+      }
 
-    .btn:hover      { background: var(--surface2); }
+      .btn:hover {
+        background: var(--surface2);
+      }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-      border-color: var(--accent);
-    }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        border-color: var(--accent);
+      }
 
-    .btn-primary:hover { background: #1557b0; }
+      .btn-primary:hover {
+        background: #1557b0;
+      }
 
-    /* ============================================================
+      /* ============================================================
        INVENTORY TABLE
        ============================================================ */
-    .table-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      overflow-x: auto;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
+      .table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        overflow-x: auto;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 1000px;
-    }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1000px;
+      }
 
-    th {
-      padding: 10px 14px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      border-bottom: 1px solid var(--border);
-      background: var(--surface2);
-      white-space: nowrap;
-    }
+      th {
+        padding: 10px 14px;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        border-bottom: 1px solid var(--border);
+        background: var(--surface2);
+        white-space: nowrap;
+      }
 
-    td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
+      td {
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
 
-    tr:last-child td { border-bottom: none; }
-    tr:hover td      { background: #f8f9fa; }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:hover td {
+        background: #f8f9fa;
+      }
 
-    .mono {
-      font-family: 'Roboto Mono', monospace;
-      font-size: 12px;
-    }
+      .mono {
+        font-family: "Roboto Mono", monospace;
+        font-size: 12px;
+      }
 
-    .loc {
-      font-weight: 500;
-      background: var(--surface2);
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 13px;
-      white-space: nowrap;
-    }
+      .loc {
+        font-weight: 500;
+        background: var(--surface2);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
 
-    /* ── Name cell: item name + image search icon ── */
-    .name-cell {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+      /* ── Name cell: item name + image search icon ── */
+      .name-cell {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    /* ── Inline icon buttons (image search, URL link) ── */
-    /*
+      /* ── Inline icon buttons (image search, URL link) ── */
+      /*
      * These small icon buttons appear next to the item name and
      * in the URL column. They fade in on row hover.
      */
-    .cell-icon-btn {
-      flex-shrink: 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      color: var(--muted);
-      opacity: 0;
-      transition: opacity 0.15s, background 0.15s, color 0.15s;
-      padding: 0;
-      text-decoration: none;
-    }
+      .cell-icon-btn {
+        flex-shrink: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 4px;
+        border: none;
+        background: none;
+        cursor: pointer;
+        color: var(--muted);
+        opacity: 0;
+        transition:
+          opacity 0.15s,
+          background 0.15s,
+          color 0.15s;
+        padding: 0;
+        text-decoration: none;
+      }
 
-    /* Image search button fades in on row hover */
-    tr:hover .cell-icon-btn {
-      opacity: 1;
-    }
+      /* Image search button fades in on row hover */
+      tr:hover .cell-icon-btn {
+        opacity: 1;
+      }
 
-    .cell-icon-btn:hover {
-      background: var(--accent-light);
-      color: var(--accent);
-    }
+      .cell-icon-btn:hover {
+        background: var(--accent-light);
+        color: var(--accent);
+      }
 
-    .cell-icon-btn svg {
-      width: 14px;
-      height: 14px;
-    }
+      .cell-icon-btn svg {
+        width: 14px;
+        height: 14px;
+      }
 
-    /* URL link cell — always visible when a URL is set */
-    .url-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      color: var(--accent);
-      text-decoration: none;
-      font-size: 13px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      white-space: nowrap;
-      max-width: 160px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      /* URL link cell — always visible when a URL is set */
+      .url-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        color: var(--accent);
+        text-decoration: none;
+        font-size: 13px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        max-width: 160px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .url-link:hover {
-      background: var(--accent-light);
-      text-decoration: underline;
-    }
+      .url-link:hover {
+        background: var(--accent-light);
+        text-decoration: underline;
+      }
 
-    .url-link svg {
-      flex-shrink: 0;
-      width: 13px;
-      height: 13px;
-    }
+      .url-link svg {
+        flex-shrink: 0;
+        width: 13px;
+        height: 13px;
+      }
 
-    /* ── Quantity +/- controls ── */
-    .qty-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
+      /* ── Quantity +/- controls ── */
+      .qty-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
 
-    .qty-btn {
-      width: 26px;
-      height: 26px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      background: var(--surface);
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+      .qty-btn {
+        width: 26px;
+        height: 26px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--surface);
+        cursor: pointer;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
 
-    .qty-btn:hover    { background: var(--surface2); }
-    .qty-btn:disabled { opacity: 0.4; cursor: default; }
+      .qty-btn:hover {
+        background: var(--surface2);
+      }
+      .qty-btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
 
-    .qty-num {
-      min-width: 30px;
-      text-align: center;
-      font-weight: 500;
-    }
+      .qty-num {
+        min-width: 30px;
+        text-align: center;
+        font-weight: 500;
+      }
 
-    /* ── Status badges ── */
-    .badge {
-      display: inline-block;
-      padding: 2px 9px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
+      /* ── Status badges ── */
+      .badge {
+        display: inline-block;
+        padding: 2px 9px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
 
-    .badge-ok  { background: var(--green-bg); color: var(--green); }
-    .badge-low { background: var(--amber-bg); color: var(--amber); }
-    .badge-out { background: var(--red-bg);   color: var(--red); }
+      .badge-ok {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+      .badge-low {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+      .badge-out {
+        background: var(--red-bg);
+        color: var(--red);
+      }
 
-    /* ── Per-row edit/delete buttons (appear on hover) ── */
-    .row-actions {
-      display: flex;
-      gap: 4px;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
+      /* ── Per-row edit/delete buttons (appear on hover) ── */
+      .row-actions {
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
 
-    tr:hover .row-actions { opacity: 1; }
+      tr:hover .row-actions {
+        opacity: 1;
+      }
 
-    .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 4px 6px;
-      border-radius: 4px;
-      color: var(--muted);
-      font-size: 15px;
-    }
+      .icon-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px 6px;
+        border-radius: 4px;
+        color: var(--muted);
+        font-size: 15px;
+      }
 
-    .icon-btn:hover     { background: var(--surface2); color: var(--text); }
-    .icon-btn.del:hover { background: var(--red-bg);   color: var(--red); }
+      .icon-btn:hover {
+        background: var(--surface2);
+        color: var(--text);
+      }
+      .icon-btn.del:hover {
+        background: var(--red-bg);
+        color: var(--red);
+      }
 
-    .empty-row td {
-      text-align: center;
-      padding: 40px;
-      color: var(--muted);
-    }
+      .empty-row td {
+        text-align: center;
+        padding: 40px;
+        color: var(--muted);
+      }
 
-    /* ============================================================
+      /* ============================================================
        ADD / EDIT MODAL
        ============================================================ */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.35);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.35);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+      }
 
-    .overlay.open { display: flex; }
+      .overlay.open {
+        display: flex;
+      }
 
-    .modal {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      width: min(540px, 95vw);
-      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
+      .modal {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        padding: 24px;
+        width: min(540px, 95vw);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
 
-    .modal h2 {
-      font-size: 16px;
-      font-weight: 500;
-      margin-bottom: 18px;
-    }
+      .modal h2 {
+        font-size: 16px;
+        font-weight: 500;
+        margin-bottom: 18px;
+      }
 
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
+      .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
 
-    .form-grid .full { grid-column: 1 / -1; }
+      .form-grid .full {
+        grid-column: 1 / -1;
+      }
 
-    .field label {
-      display: block;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
+      .field label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
 
-    .field input {
-      width: 100%;
-      padding: 8px 10px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 14px;
-    }
+      .field input {
+        width: 100%;
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        font-size: 14px;
+      }
 
-    .field input:focus {
-      outline: 2px solid var(--accent);
-      border-color: transparent;
-    }
+      .field input:focus {
+        outline: 2px solid var(--accent);
+        border-color: transparent;
+      }
 
-    /* Visual section divider inside the form */
-    .form-section-label {
-      grid-column: 1 / -1;
-      font-size: 11px;
-      font-weight: 500;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      padding-top: 8px;
-      border-top: 1px solid var(--border);
-      margin-top: 4px;
-    }
+      /* Visual section divider inside the form */
+      .form-section-label {
+        grid-column: 1 / -1;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--muted);
+        padding-top: 8px;
+        border-top: 1px solid var(--border);
+        margin-top: 4px;
+      }
 
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 20px;
-    }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 20px;
+      }
 
-    .spinner {
-      display: inline-block;
-      width: 13px;
-      height: 13px;
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-      vertical-align: middle;
-    }
+      .spinner {
+        display: inline-block;
+        width: 13px;
+        height: 13px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.6s linear infinite;
+        vertical-align: middle;
+      }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-  </style>
-</head>
-<body>
-
-  <!-- ============================================================
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ============================================================
        TOP BAR
        ============================================================ -->
-  <div class="topbar">
-    <div class="topbar-left">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-        <rect x="3"  y="3"  width="7" height="7" rx="1.5" fill="#1a73e8"/>
-        <rect x="14" y="3"  width="7" height="7" rx="1.5" fill="#34a853"/>
-        <rect x="3"  y="14" width="7" height="7" rx="1.5" fill="#fbbc04"/>
-        <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#ea4335"/>
-      </svg>
-      <div>
-        <h1>Inventory Manager</h1>
-        <a
-          href="https://docs.google.com/spreadsheets/d/1SodEmCM7jH-QloYsYur6eT_Qe4U_aZS5A9Uysu9YK0w/edit?gid=908959763#gid=908959763"
-          target="_blank"
-          rel="noopener"
-          style="font-size: 12px; color: var(--accent); text-decoration: none;"
-        >View spreadsheet ↗</a>
+    <div class="topbar">
+      <div class="topbar-left">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#1a73e8" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#34a853" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#fbbc04" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#ea4335" />
+        </svg>
+        <div>
+          <h1>Inventory Manager</h1>
+          <a
+            href="https://docs.google.com/spreadsheets/d/1SodEmCM7jH-QloYsYur6eT_Qe4U_aZS5A9Uysu9YK0w/edit?gid=908959763#gid=908959763"
+            target="_blank"
+            rel="noopener"
+            style="font-size: 12px; color: var(--accent); text-decoration: none"
+            >View spreadsheet ↗</a
+          >
+        </div>
+      </div>
+      <div class="sync-pill">
+        <div class="dot" id="dot"></div>
+        <span id="syncText">Loading…</span>
       </div>
     </div>
-    <div class="sync-pill">
-      <div class="dot" id="dot"></div>
-      <span id="syncText">Loading…</span>
-    </div>
-  </div>
 
-
-  <!-- ============================================================
+    <!-- ============================================================
        MAIN CONTENT
        ============================================================ -->
-  <div class="main">
+    <div class="main">
+      <div class="error-banner" id="errBanner"></div>
 
-    <div class="error-banner" id="errBanner"></div>
+      <!-- Stat cards -->
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Total items</div>
+          <div class="stat-value" id="sTotal">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Total units</div>
+          <div class="stat-value" id="sUnits">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Low stock</div>
+          <div class="stat-value" id="sLow">—</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Out of stock</div>
+          <div class="stat-value" id="sOut">—</div>
+        </div>
+      </div>
 
-    <!-- Stat cards -->
-    <div class="stats">
-      <div class="stat"><div class="stat-label">Total items</div><div class="stat-value" id="sTotal">—</div></div>
-      <div class="stat"><div class="stat-label">Total units</div><div class="stat-value" id="sUnits">—</div></div>
-      <div class="stat"><div class="stat-label">Low stock</div><div class="stat-value" id="sLow">—</div></div>
-      <div class="stat"><div class="stat-label">Out of stock</div><div class="stat-value" id="sOut">—</div></div>
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <input
+          type="text"
+          id="search"
+          placeholder="Search name, SKU, location, manufacturer, supplier…"
+          oninput="renderTable()"
+        />
+        <select id="filterStatus" onchange="renderTable()">
+          <option value="">All status</option>
+          <option value="ok">In stock</option>
+          <option value="low">Low stock</option>
+          <option value="out">Out of stock</option>
+        </select>
+        <button class="btn" onclick="loadItems()">↻ Refresh</button>
+        <button class="btn btn-primary" onclick="openAdd()">+ Add item</button>
+      </div>
+
+      <!-- Table -->
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>SKU</th>
+              <th>Location</th>
+              <th>Qty</th>
+              <th>Status</th>
+              <th>Manufacturer</th>
+              <th>Supplier 1</th>
+              <th>Supplier 2</th>
+              <th>Link</th>
+              <th>Unit Cost</th>
+              <th>Min</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr class="empty-row">
+              <td colspan="13">Connecting to Google Sheets…</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Toolbar -->
-    <div class="toolbar">
-      <input type="text" id="search" placeholder="Search name, SKU, location, manufacturer, supplier…" oninput="renderTable()">
-      <select id="filterStatus" onchange="renderTable()">
-        <option value="">All status</option>
-        <option value="ok">In stock</option>
-        <option value="low">Low stock</option>
-        <option value="out">Out of stock</option>
-      </select>
-      <button class="btn" onclick="loadItems()">↻ Refresh</button>
-      <button class="btn btn-primary" onclick="openAdd()">+ Add item</button>
-    </div>
-
-    <!-- Table -->
-    <div class="table-card">
-      <table>
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>SKU</th>
-            <th>Location</th>
-            <th>Qty</th>
-            <th>Status</th>
-            <th>Manufacturer</th>
-            <th>Supplier 1</th>
-            <th>Supplier 2</th>
-            <th>Link</th>
-            <th>Unit Cost</th>
-            <th>Min</th>
-            <th>Notes</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          <tr class="empty-row"><td colspan="13">Connecting to Google Sheets…</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-  </div>
-
-
-  <!-- ============================================================
+    <!-- ============================================================
        ADD / EDIT MODAL
        ============================================================ -->
-  <div class="overlay" id="overlay" onclick="if (event.target === this) closeModal()">
-    <div class="modal">
-      <h2 id="modalTitle">Add item</h2>
-      <div class="form-grid">
+    <div
+      class="overlay"
+      id="overlay"
+      onclick="if (event.target === this) closeModal();"
+    >
+      <div class="modal">
+        <h2 id="modalTitle">Add item</h2>
+        <div class="form-grid">
+          <!-- Stock info -->
+          <div class="field full">
+            <label>Item name *</label>
+            <input
+              id="fName"
+              type="text"
+              placeholder="e.g. M8 Hex Bolts (100pk)"
+            />
+          </div>
+          <div class="field">
+            <label>SKU / Code</label>
+            <input id="fSKU" type="text" placeholder="BLT-M8-100" />
+          </div>
+          <div class="field">
+            <label>Pallet / Bin location</label>
+            <input id="fLoc" type="text" placeholder="Pallet 1" />
+          </div>
+          <div class="field">
+            <label>Quantity</label>
+            <input id="fQty" type="number" min="0" value="0" />
+          </div>
+          <div class="field">
+            <label>Low stock threshold</label>
+            <input id="fMin" type="number" min="0" value="1" />
+          </div>
+          <div class="field">
+            <label>Unit cost ($)</label>
+            <input
+              id="fUnitCost"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
 
-        <!-- Stock info -->
-        <div class="field full">
-          <label>Item name *</label>
-          <input id="fName" type="text" placeholder="e.g. M8 Hex Bolts (100pk)">
-        </div>
-        <div class="field">
-          <label>SKU / Code</label>
-          <input id="fSKU" type="text" placeholder="BLT-M8-100">
-        </div>
-        <div class="field">
-          <label>Pallet / Bin location</label>
-          <input id="fLoc" type="text" placeholder="P3-B12">
-        </div>
-        <div class="field">
-          <label>Quantity</label>
-          <input id="fQty" type="number" min="0" value="0">
-        </div>
-        <div class="field">
-          <label>Low stock threshold</label>
-          <input id="fMin" type="number" min="0" value="5">
-        </div>
-        <div class="field">
-          <label>Unit cost ($)</label>
-          <input id="fUnitCost" type="number" min="0" step="0.01" placeholder="0.00">
-        </div>
+          <!-- Manufacturer & suppliers -->
+          <div class="form-section-label">Manufacturer &amp; Suppliers</div>
+          <div class="field full">
+            <label>Manufacturer</label>
+            <input
+              id="fManufacturer"
+              type="text"
+              placeholder="e.g. Acme Corp"
+            />
+          </div>
+          <div class="field">
+            <label>Supplier 1</label>
+            <input
+              id="fSupplier1"
+              type="text"
+              placeholder="e.g. FastenerWorld"
+            />
+          </div>
+          <div class="field">
+            <label>Supplier 2</label>
+            <input id="fSupplier2" type="text" placeholder="e.g. BoltsRUs" />
+          </div>
 
-        <!-- Manufacturer & suppliers -->
-        <div class="form-section-label">Manufacturer &amp; Suppliers</div>
-        <div class="field full">
-          <label>Manufacturer</label>
-          <input id="fManufacturer" type="text" placeholder="e.g. Acme Corp">
+          <!-- Link & notes -->
+          <div class="form-section-label">Link &amp; Notes</div>
+          <div class="field full">
+            <label>URL (product page, datasheet, etc.)</label>
+            <input id="fUrl" type="url" placeholder="https://…" />
+          </div>
+          <div class="field full">
+            <label>Notes</label>
+            <input id="fNotes" type="text" placeholder="Optional" />
+          </div>
         </div>
-        <div class="field">
-          <label>Supplier 1</label>
-          <input id="fSupplier1" type="text" placeholder="e.g. FastenerWorld">
+        <div class="modal-actions">
+          <button class="btn" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">
+            Save
+          </button>
         </div>
-        <div class="field">
-          <label>Supplier 2</label>
-          <input id="fSupplier2" type="text" placeholder="e.g. BoltsRUs">
-        </div>
-
-        <!-- Link & notes -->
-        <div class="form-section-label">Link &amp; Notes</div>
-        <div class="field full">
-          <label>URL (product page, datasheet, etc.)</label>
-          <input id="fUrl" type="url" placeholder="https://…">
-        </div>
-        <div class="field full">
-          <label>Notes</label>
-          <input id="fNotes" type="text" placeholder="Optional">
-        </div>
-
-      </div>
-      <div class="modal-actions">
-        <button class="btn" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" id="saveBtn" onclick="saveItem()">Save</button>
       </div>
     </div>
-  </div>
 
-
-  <!-- ============================================================
+    <!-- ============================================================
        JAVASCRIPT
        ============================================================ -->
-  <script>
+    <script>
+      // ============================================================
+      //  CONFIGURATION
+      //  To point the app at a different Google Sheet, update this
+      //  URL and redeploy the Apps Script as a new version.
+      // ============================================================
 
-    // ============================================================
-    //  CONFIGURATION
-    //  To point the app at a different Google Sheet, update this
-    //  URL and redeploy the Apps Script as a new version.
-    // ============================================================
+      const SCRIPT_URL =
+        "https://script.google.com/macros/s/AKfycbzHi2tpqGVLGt2dp4zgfIesw0h0i7G8A62yzm0-dMEDw86i0ojspylu81fsX0hl5HNJ/exec";
 
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzHi2tpqGVLGt2dp4zgfIesw0h0i7G8A62yzm0-dMEDw86i0ojspylu81fsX0hl5HNJ/exec';
+      // ── App state ────────────────────────────────────────────────
+      let items = []; // local mirror of the Sheet data
+      let editingId = null; // null = adding new, string = editing existing
 
+      // ============================================================
+      //  SYNC INDICATOR
+      // ============================================================
 
-    // ── App state ────────────────────────────────────────────────
-    let items     = [];    // local mirror of the Sheet data
-    let editingId = null;  // null = adding new, string = editing existing
+      function setSync(state, text) {
+        document.getElementById("dot").className = "dot " + state;
+        document.getElementById("syncText").textContent = text;
+      }
 
+      // ============================================================
+      //  ERROR DISPLAY
+      // ============================================================
 
-    // ============================================================
-    //  SYNC INDICATOR
-    // ============================================================
+      function showError(msg) {
+        const banner = document.getElementById("errBanner");
+        banner.textContent = msg;
+        banner.style.display = "block";
+        setTimeout(() => {
+          banner.style.display = "none";
+        }, 7000);
+      }
 
-    function setSync(state, text) {
-      document.getElementById('dot').className       = 'dot ' + state;
-      document.getElementById('syncText').textContent = text;
-    }
+      // ============================================================
+      //  API — all requests use GET + URL parameters
+      //
+      //  Why GET and not POST?
+      //  Google Apps Script blocks POST requests from other origins
+      //  (CORS preflight fails). GET requests work without a
+      //  preflight, so we encode everything as query parameters.
+      // ============================================================
 
+      async function api(params) {
+        setSync("spin", "Syncing…");
 
-    // ============================================================
-    //  ERROR DISPLAY
-    // ============================================================
+        const queryString = new URLSearchParams(params).toString();
+        const url = SCRIPT_URL + "?" + queryString;
 
-    function showError(msg) {
-      const banner = document.getElementById('errBanner');
-      banner.textContent   = msg;
-      banner.style.display = 'block';
-      setTimeout(() => { banner.style.display = 'none'; }, 7000);
-    }
+        try {
+          const response = await fetch(url, { redirect: "follow" });
 
+          if (!response.ok) throw new Error("HTTP " + response.status);
 
-    // ============================================================
-    //  API — all requests use GET + URL parameters
-    //
-    //  Why GET and not POST?
-    //  Google Apps Script blocks POST requests from other origins
-    //  (CORS preflight fails). GET requests work without a
-    //  preflight, so we encode everything as query parameters.
-    // ============================================================
+          const data = await response.json();
 
-    async function api(params) {
-      setSync('spin', 'Syncing…');
+          if (data.error) throw new Error(data.error);
 
-      const queryString = new URLSearchParams(params).toString();
-      const url         = SCRIPT_URL + '?' + queryString;
+          setSync("ok", "Synced · " + new Date().toLocaleTimeString());
+          return data;
+        } catch (err) {
+          setSync("err", "Sync error — check connection");
+          showError(
+            "Could not reach Google Sheets: " +
+              err.message +
+              '. Make sure the Web App is deployed with "Anyone" access ' +
+              "and that you have re-deployed after any code changes.",
+          );
+          return null;
+        }
+      }
 
-      try {
-        const response = await fetch(url, { redirect: 'follow' });
+      // ============================================================
+      //  LOAD ALL ITEMS FROM THE SHEET
+      // ============================================================
 
-        if (!response.ok) throw new Error('HTTP ' + response.status);
+      async function loadItems() {
+        setSync("spin", "Loading…");
+        const data = await api({ action: "getAll" });
+        if (data) {
+          items = data.items || [];
+          renderTable();
+        }
+      }
 
-        const data = await response.json();
+      // ============================================================
+      //  GOOGLE IMAGE SEARCH
+      //  Opens a new tab with a Google Images search for the item name.
+      // ============================================================
 
-        if (data.error) throw new Error(data.error);
-
-        setSync('ok', 'Synced · ' + new Date().toLocaleTimeString());
-        return data;
-
-      } catch (err) {
-        setSync('err', 'Sync error — check connection');
-        showError(
-          'Could not reach Google Sheets: ' + err.message +
-          '. Make sure the Web App is deployed with "Anyone" access ' +
-          'and that you have re-deployed after any code changes.'
+      function imageSearch(name, manufacturer) {
+        // Prepend manufacturer if present, e.g. "DAB esybox mini pump"
+        const combined = [manufacturer, name].filter(Boolean).join(" ");
+        const query = encodeURIComponent(combined);
+        window.open(
+          "https://www.google.com/search?tbm=isch&q=" + query,
+          "_blank",
         );
-        return null;
       }
-    }
 
+      // ============================================================
+      //  RENDER THE TABLE
+      // ============================================================
 
-    // ============================================================
-    //  LOAD ALL ITEMS FROM THE SHEET
-    // ============================================================
-
-    async function loadItems() {
-      setSync('spin', 'Loading…');
-      const data = await api({ action: 'getAll' });
-      if (data) {
-        items = data.items || [];
-        renderTable();
+      function getStatus(qty, min) {
+        if (qty === 0) return "out";
+        if (qty < min) return "low";
+        return "ok";
       }
-    }
 
+      const STATUS_LABELS = {
+        ok: "In stock",
+        low: "Low stock",
+        out: "Out of stock",
+      };
 
-    // ============================================================
-    //  GOOGLE IMAGE SEARCH
-    //  Opens a new tab with a Google Images search for the item name.
-    // ============================================================
+      function updateStats() {
+        document.getElementById("sTotal").textContent = items.length;
+        document.getElementById("sUnits").textContent = items
+          .reduce((s, i) => s + i.qty, 0)
+          .toLocaleString();
+        document.getElementById("sLow").textContent = items.filter(
+          (i) => getStatus(i.qty, i.min) === "low",
+        ).length;
+        document.getElementById("sOut").textContent = items.filter(
+          (i) => getStatus(i.qty, i.min) === "out",
+        ).length;
+      }
 
-    function imageSearch(name, manufacturer) {
-      // Prepend manufacturer if present, e.g. "DAB esybox mini pump"
-      const combined = [manufacturer, name].filter(Boolean).join(' ');
-      const query    = encodeURIComponent(combined);
-      window.open('https://www.google.com/search?tbm=isch&q=' + query, '_blank');
-    }
-
-
-    // ============================================================
-    //  RENDER THE TABLE
-    // ============================================================
-
-    function getStatus(qty, min) {
-      if (qty === 0)  return 'out';
-      if (qty < min)  return 'low';
-      return 'ok';
-    }
-
-    const STATUS_LABELS = { ok: 'In stock', low: 'Low stock', out: 'Out of stock' };
-
-    function updateStats() {
-      document.getElementById('sTotal').textContent = items.length;
-      document.getElementById('sUnits').textContent = items.reduce((s, i) => s + i.qty, 0).toLocaleString();
-      document.getElementById('sLow').textContent   = items.filter(i => getStatus(i.qty, i.min) === 'low').length;
-      document.getElementById('sOut').textContent   = items.filter(i => getStatus(i.qty, i.min) === 'out').length;
-    }
-
-    // SVG for the magnifying glass icon (image search)
-    const ICON_SEARCH = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+      // SVG for the magnifying glass icon (image search)
+      const ICON_SEARCH = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
       <circle cx="6.5" cy="6.5" r="4"/>
       <line x1="10" y1="10" x2="14" y2="14"/>
     </svg>`;
 
-    // SVG for the external link icon (URL column)
-    const ICON_LINK = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+      // SVG for the external link icon (URL column)
+      const ICON_LINK = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
       <path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9"/>
       <path d="M10 2h4v4"/>
       <line x1="14" y1="2" x2="7" y2="9"/>
     </svg>`;
 
-    function renderTable() {
-      const searchQuery  = document.getElementById('search').value.toLowerCase();
-      const statusFilter = document.getElementById('filterStatus').value;
+      function renderTable() {
+        const searchQuery = document
+          .getElementById("search")
+          .value.toLowerCase();
+        const statusFilter = document.getElementById("filterStatus").value;
 
-      const filtered = items.filter(item => {
-        const searchFields = [
-          item.name, item.sku, item.location,
-          item.manufacturer, item.supplier1, item.supplier2
-        ];
-        const matchesSearch = !searchQuery ||
-          searchFields.some(f => (f || '').toLowerCase().includes(searchQuery));
+        const filtered = items.filter((item) => {
+          const searchFields = [
+            item.name,
+            item.sku,
+            item.location,
+            item.manufacturer,
+            item.supplier1,
+            item.supplier2,
+          ];
+          const matchesSearch =
+            !searchQuery ||
+            searchFields.some((f) =>
+              (f || "").toLowerCase().includes(searchQuery),
+            );
 
-        const matchesFilter = !statusFilter || getStatus(item.qty, item.min) === statusFilter;
+          const matchesFilter =
+            !statusFilter || getStatus(item.qty, item.min) === statusFilter;
 
-        return matchesSearch && matchesFilter;
-      });
+          return matchesSearch && matchesFilter;
+        });
 
-      const tbody = document.getElementById('tbody');
+        const tbody = document.getElementById("tbody");
 
-      if (!filtered.length) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="13">No items found.</td></tr>';
-        updateStats();
-        return;
-      }
+        if (!filtered.length) {
+          tbody.innerHTML =
+            '<tr class="empty-row"><td colspan="13">No items found.</td></tr>';
+          updateStats();
+          return;
+        }
 
-      tbody.innerHTML = filtered.map(item => {
-        const s = getStatus(item.qty, item.min);
+        tbody.innerHTML = filtered
+          .map((item) => {
+            const s = getStatus(item.qty, item.min);
 
-        // Build the URL cell: show a labelled link if a URL is saved,
-        // otherwise show nothing.
-        const urlCell = item.url
-          ? `<a class="url-link" href="${esc(item.url)}" target="_blank" rel="noopener" title="${esc(item.url)}">
+            // Build the URL cell: show a labelled link if a URL is saved,
+            // otherwise show nothing.
+            const urlCell = item.url
+              ? `<a class="url-link" href="${esc(item.url)}" target="_blank" rel="noopener" title="${esc(item.url)}">
                ${ICON_LINK} Link
              </a>`
-          : '<span style="color:var(--muted);font-size:13px;">—</span>';
+              : '<span style="color:var(--muted);font-size:13px;">—</span>';
 
-        return `
+            return `
           <tr>
             <td>
               <div class="name-cell">
                 ${esc(item.name)}
                 <button
                   class="cell-icon-btn"
-                  title="Search Google Images for &quot;${esc([item.manufacturer, item.name].filter(Boolean).join(' '))}&quot;"
+                  title="Search Google Images for &quot;${esc([item.manufacturer, item.name].filter(Boolean).join(" "))}&quot;"
                   onclick="imageSearch('${esc(item.name)}', '${esc(item.manufacturer)}')"
                 >${ICON_SEARCH}</button>
               </div>
             </td>
-            <td class="mono">${esc(item.sku) || '—'}</td>
-            <td><span class="loc">${esc(item.location) || '—'}</span></td>
+            <td class="mono">${esc(item.sku) || "—"}</td>
+            <td><span class="loc">${esc(item.location) || "—"}</span></td>
             <td>
               <div class="qty-wrap">
-                <button class="qty-btn" onclick="changeQty('${item.id}', -1)" ${item.qty <= 0 ? 'disabled' : ''}>−</button>
+                <button class="qty-btn" onclick="changeQty('${item.id}', -1)" ${item.qty <= 0 ? "disabled" : ""}>−</button>
                 <span class="qty-num">${item.qty}</span>
                 <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
               </div>
             </td>
             <td><span class="badge badge-${s}">${STATUS_LABELS[s]}</span></td>
-            <td>${esc(item.manufacturer) || '—'}</td>
-            <td>${esc(item.supplier1) || '—'}</td>
-            <td>${esc(item.supplier2) || '—'}</td>
+            <td>${esc(item.manufacturer) || "—"}</td>
+            <td>${esc(item.supplier1) || "—"}</td>
+            <td>${esc(item.supplier2) || "—"}</td>
             <td>${urlCell}</td>
-            <td>${item.unitCost ? '$' + Number(item.unitCost).toFixed(2) : '—'}</td>
+            <td>${item.unitCost ? "$" + Number(item.unitCost).toFixed(2) : "—"}</td>
             <td>${item.min}</td>
-            <td style="color: var(--muted); font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(item.notes) || ''}</td>
+            <td style="color: var(--muted); font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(item.notes) || ""}</td>
             <td>
               <div class="row-actions">
                 <button class="icon-btn" title="Edit" onclick="openEdit('${item.id}')">✎</button>
@@ -862,149 +969,147 @@
             </td>
           </tr>
         `;
-      }).join('');
+          })
+          .join("");
 
-      updateStats();
-    }
-
-    // Escape user-supplied strings before inserting into HTML
-    function esc(str) {
-      return String(str || '')
-        .replace(/&/g,  '&amp;')
-        .replace(/</g,  '&lt;')
-        .replace(/>/g,  '&gt;')
-        .replace(/"/g,  '&quot;')
-        .replace(/'/g,  '&#39;');
-    }
-
-
-    // ============================================================
-    //  QUANTITY CHANGE
-    // ============================================================
-
-    async function changeQty(id, delta) {
-      // Update local state immediately so the UI feels instant
-      const item = items.find(i => i.id === id);
-      if (!item) return;
-      item.qty = Math.max(0, item.qty + delta);
-      renderTable();
-
-      // Sync to the Sheet, then reload to confirm
-      await api({ action: 'updateQty', id, delta });
-      loadItems();
-    }
-
-
-    // ============================================================
-    //  DELETE ITEM
-    // ============================================================
-
-    async function deleteItem(id) {
-      if (!confirm('Delete this item from inventory?')) return;
-
-      items = items.filter(i => i.id !== id);
-      renderTable();
-
-      await api({ action: 'delete', id });
-    }
-
-
-    // ============================================================
-    //  ADD / EDIT MODAL
-    // ============================================================
-
-    function clearForm() {
-      document.getElementById('fName').value         = '';
-      document.getElementById('fSKU').value          = '';
-      document.getElementById('fLoc').value          = '';
-      document.getElementById('fQty').value          = 0;
-      document.getElementById('fMin').value          = 5;
-      document.getElementById('fManufacturer').value = '';
-      document.getElementById('fSupplier1').value    = '';
-      document.getElementById('fSupplier2').value    = '';
-      document.getElementById('fUrl').value          = '';
-      document.getElementById('fUnitCost').value     = '';
-      document.getElementById('fNotes').value        = '';
-    }
-
-    function openAdd() {
-      editingId = null;
-      document.getElementById('modalTitle').textContent = 'Add item';
-      clearForm();
-      document.getElementById('overlay').classList.add('open');
-      setTimeout(() => document.getElementById('fName').focus(), 50);
-    }
-
-    function openEdit(id) {
-      editingId = id;
-      const item = items.find(x => x.id === id);
-      if (!item) return;
-
-      document.getElementById('modalTitle').textContent = 'Edit item';
-      document.getElementById('fName').value         = item.name         || '';
-      document.getElementById('fSKU').value          = item.sku          || '';
-      document.getElementById('fLoc').value          = item.location     || '';
-      document.getElementById('fQty').value          = item.qty;
-      document.getElementById('fMin').value          = item.min;
-      document.getElementById('fManufacturer').value = item.manufacturer || '';
-      document.getElementById('fSupplier1').value    = item.supplier1    || '';
-      document.getElementById('fSupplier2').value    = item.supplier2    || '';
-      document.getElementById('fUrl').value          = item.url          || '';
-      document.getElementById('fUnitCost').value     = item.unitCost     || '';
-      document.getElementById('fNotes').value        = item.notes        || '';
-
-      document.getElementById('overlay').classList.add('open');
-    }
-
-    function closeModal() {
-      document.getElementById('overlay').classList.remove('open');
-    }
-
-    async function saveItem() {
-      const name = document.getElementById('fName').value.trim();
-      if (!name) {
-        showError('Item name is required.');
-        return;
+        updateStats();
       }
 
-      const payload = {
-        name,
-        sku:          document.getElementById('fSKU').value.trim(),
-        location:     document.getElementById('fLoc').value.trim(),
-        qty:          parseInt(document.getElementById('fQty').value)  || 0,
-        min:          parseInt(document.getElementById('fMin').value)  || 5,
-        manufacturer: document.getElementById('fManufacturer').value.trim(),
-        supplier1:    document.getElementById('fSupplier1').value.trim(),
-        supplier2:    document.getElementById('fSupplier2').value.trim(),
-        url:          document.getElementById('fUrl').value.trim(),
-        unitCost:     parseFloat(document.getElementById('fUnitCost').value) || '',
-        notes:        document.getElementById('fNotes').value.trim(),
-      };
-
-      const saveBtn = document.getElementById('saveBtn');
-      saveBtn.innerHTML = '<span class="spinner"></span> Saving';
-      saveBtn.disabled  = true;
-
-      closeModal();
-
-      if (editingId) {
-        await api({ action: 'update', id: editingId, ...payload });
-      } else {
-        await api({ action: 'add', ...payload });
+      // Escape user-supplied strings before inserting into HTML
+      function esc(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
       }
 
-      saveBtn.textContent = 'Save';
-      saveBtn.disabled    = false;
+      // ============================================================
+      //  QUANTITY CHANGE
+      // ============================================================
+
+      async function changeQty(id, delta) {
+        // Update local state immediately so the UI feels instant
+        const item = items.find((i) => i.id === id);
+        if (!item) return;
+        item.qty = Math.max(0, item.qty + delta);
+        renderTable();
+
+        // Sync to the Sheet, then reload to confirm
+        await api({ action: "updateQty", id, delta });
+        loadItems();
+      }
+
+      // ============================================================
+      //  DELETE ITEM
+      // ============================================================
+
+      async function deleteItem(id) {
+        if (!confirm("Delete this item from inventory?")) return;
+
+        items = items.filter((i) => i.id !== id);
+        renderTable();
+
+        await api({ action: "delete", id });
+      }
+
+      // ============================================================
+      //  ADD / EDIT MODAL
+      // ============================================================
+
+      function clearForm() {
+        document.getElementById("fName").value = "";
+        document.getElementById("fSKU").value = "";
+        document.getElementById("fLoc").value = "";
+        document.getElementById("fQty").value = 0;
+        document.getElementById("fMin").value = 5;
+        document.getElementById("fManufacturer").value = "";
+        document.getElementById("fSupplier1").value = "";
+        document.getElementById("fSupplier2").value = "";
+        document.getElementById("fUrl").value = "";
+        document.getElementById("fUnitCost").value = "";
+        document.getElementById("fNotes").value = "";
+      }
+
+      function openAdd() {
+        editingId = null;
+        document.getElementById("modalTitle").textContent = "Add item";
+        clearForm();
+        document.getElementById("overlay").classList.add("open");
+        setTimeout(() => document.getElementById("fName").focus(), 50);
+      }
+
+      function openEdit(id) {
+        editingId = id;
+        const item = items.find((x) => x.id === id);
+        if (!item) return;
+
+        document.getElementById("modalTitle").textContent = "Edit item";
+        document.getElementById("fName").value = item.name || "";
+        document.getElementById("fSKU").value = item.sku || "";
+        document.getElementById("fLoc").value = item.location || "";
+        document.getElementById("fQty").value = item.qty;
+        document.getElementById("fMin").value = item.min;
+        document.getElementById("fManufacturer").value =
+          item.manufacturer || "";
+        document.getElementById("fSupplier1").value = item.supplier1 || "";
+        document.getElementById("fSupplier2").value = item.supplier2 || "";
+        document.getElementById("fUrl").value = item.url || "";
+        document.getElementById("fUnitCost").value = item.unitCost || "";
+        document.getElementById("fNotes").value = item.notes || "";
+
+        document.getElementById("overlay").classList.add("open");
+      }
+
+      function closeModal() {
+        document.getElementById("overlay").classList.remove("open");
+      }
+
+      async function saveItem() {
+        const name = document.getElementById("fName").value.trim();
+        if (!name) {
+          showError("Item name is required.");
+          return;
+        }
+
+        const payload = {
+          name,
+          sku: document.getElementById("fSKU").value.trim(),
+          location: document.getElementById("fLoc").value.trim(),
+          qty: parseInt(document.getElementById("fQty").value) || 0,
+          min: parseInt(document.getElementById("fMin").value) || 5,
+          manufacturer: document.getElementById("fManufacturer").value.trim(),
+          supplier1: document.getElementById("fSupplier1").value.trim(),
+          supplier2: document.getElementById("fSupplier2").value.trim(),
+          url: document.getElementById("fUrl").value.trim(),
+          unitCost:
+            parseFloat(document.getElementById("fUnitCost").value) || "",
+          notes: document.getElementById("fNotes").value.trim(),
+        };
+
+        const saveBtn = document.getElementById("saveBtn");
+        saveBtn.innerHTML = '<span class="spinner"></span> Saving';
+        saveBtn.disabled = true;
+
+        closeModal();
+
+        if (editingId) {
+          await api({ action: "update", id: editingId, ...payload });
+        } else {
+          await api({ action: "add", ...payload });
+        }
+
+        saveBtn.textContent = "Save";
+        saveBtn.disabled = false;
+        loadItems();
+      }
+
+      // ============================================================
+      //  INIT — load data on page open
+      // ============================================================
+
       loadItems();
-    }
-
-
-    // ============================================================
-    //  INIT — load data on page open
-    // ============================================================
-
-    loadItems();
-
-  </script>
-</body>
+    </script>
+  </body>
 </html>
