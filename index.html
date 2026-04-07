@@ -283,10 +283,6 @@
       }
 
       /* ── Inline icon buttons (image search, URL link) ── */
-      /*
-     * These small icon buttons appear next to the item name and
-     * in the URL column. They fade in on row hover.
-     */
       .cell-icon-btn {
         flex-shrink: 0;
         display: inline-flex;
@@ -308,7 +304,6 @@
         text-decoration: none;
       }
 
-      /* Image search button fades in on row hover */
       tr:hover .cell-icon-btn {
         opacity: 1;
       }
@@ -605,7 +600,7 @@
         <input
           type="text"
           id="search"
-          placeholder="Search name, SKU, location, manufacturer, supplier…"
+          placeholder="Search name, SKU, MPN, location, manufacturer, supplier…"
           oninput="renderTable()"
         />
         <select id="filterStatus" onchange="renderTable()">
@@ -624,7 +619,11 @@
           <thead>
             <tr>
               <th>Name</th>
+              <th>Type</th>
+              <th>Condition</th>
+              <th>Unit</th>
               <th>SKU</th>
+              <th>MPN</th>
               <th>Location</th>
               <th>Qty</th>
               <th>Status</th>
@@ -640,7 +639,7 @@
           </thead>
           <tbody id="tbody">
             <tr class="empty-row">
-              <td colspan="13">Connecting to Google Sheets…</td>
+              <td colspan="17">Connecting to Google Sheets…</td>
             </tr>
           </tbody>
         </table>
@@ -658,6 +657,7 @@
       <div class="modal">
         <h2 id="modalTitle">Add item</h2>
         <div class="form-grid">
+
           <!-- Stock info -->
           <div class="field full">
             <label>Item name *</label>
@@ -668,8 +668,32 @@
             />
           </div>
           <div class="field">
+            <label>Type</label>
+            <select id="fType" style="width:100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface);">
+              <option value="Inventory Item">Inventory Item</option>
+              <option value="Asset">Asset</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Condition</label>
+            <select id="fCondition" style="width:100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface);">
+              <option value="Unknown">Unknown</option>
+              <option value="New">New</option>
+              <option value="Used - Working">Used - Working</option>
+              <option value="Not Working">Not Working</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Unit</label>
+            <input id="fUnit" type="text" placeholder="e.g. Each, Package, Box…" />
+          </div>
+          <div class="field">
             <label>SKU / Code</label>
             <input id="fSKU" type="text" placeholder="BLT-M8-100" />
+          </div>
+          <div class="field">
+            <label>Manufacturer Part Number (MPN)</label>
+            <input id="fMPN" type="text" placeholder="e.g. DAB-60180543" />
           </div>
           <div class="field">
             <label>Pallet / Bin location</label>
@@ -727,6 +751,7 @@
             <label>Notes</label>
             <input id="fNotes" type="text" placeholder="Optional" />
           </div>
+
         </div>
         <div class="modal-actions">
           <button class="btn" onclick="closeModal()">Cancel</button>
@@ -751,7 +776,7 @@
         "https://script.google.com/macros/s/AKfycbzHi2tpqGVLGt2dp4zgfIesw0h0i7G8A62yzm0-dMEDw86i0ojspylu81fsX0hl5HNJ/exec";
 
       // ── App state ────────────────────────────────────────────────
-      let items = []; // local mirror of the Sheet data
+      let items = [];     // local mirror of the Sheet data
       let editingId = null; // null = adding new, string = editing existing
 
       // ============================================================
@@ -829,7 +854,7 @@
 
       // ============================================================
       //  GOOGLE IMAGE SEARCH
-      //  Opens a new tab with a Google Images search for the item name.
+      //  Searches for "Manufacturer Name" e.g. "DAB esybox mini pump"
       // ============================================================
 
       function imageSearch(name, manufacturer) {
@@ -873,16 +898,16 @@
 
       // SVG for the magnifying glass icon (image search)
       const ICON_SEARCH = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
-      <circle cx="6.5" cy="6.5" r="4"/>
-      <line x1="10" y1="10" x2="14" y2="14"/>
-    </svg>`;
+        <circle cx="6.5" cy="6.5" r="4"/>
+        <line x1="10" y1="10" x2="14" y2="14"/>
+      </svg>`;
 
       // SVG for the external link icon (URL column)
       const ICON_LINK = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
-      <path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9"/>
-      <path d="M10 2h4v4"/>
-      <line x1="14" y1="2" x2="7" y2="9"/>
-    </svg>`;
+        <path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9"/>
+        <path d="M10 2h4v4"/>
+        <line x1="14" y1="2" x2="7" y2="9"/>
+      </svg>`;
 
       function renderTable() {
         const searchQuery = document
@@ -894,6 +919,7 @@
           const searchFields = [
             item.name,
             item.sku,
+            item.mpn,
             item.location,
             item.manufacturer,
             item.supplier1,
@@ -915,7 +941,7 @@
 
         if (!filtered.length) {
           tbody.innerHTML =
-            '<tr class="empty-row"><td colspan="13">No items found.</td></tr>';
+            '<tr class="empty-row"><td colspan="17">No items found.</td></tr>';
           updateStats();
           return;
         }
@@ -924,51 +950,53 @@
           .map((item) => {
             const s = getStatus(item.qty, item.min);
 
-            // Build the URL cell: show a labelled link if a URL is saved,
-            // otherwise show nothing.
             const urlCell = item.url
               ? `<a class="url-link" href="${esc(item.url)}" target="_blank" rel="noopener" title="${esc(item.url)}">
-               ${ICON_LINK} Link
-             </a>`
+                   ${ICON_LINK} Link
+                 </a>`
               : '<span style="color:var(--muted);font-size:13px;">—</span>';
 
             return `
-          <tr>
-            <td>
-              <div class="name-cell">
-                ${esc(item.name)}
-                <button
-                  class="cell-icon-btn"
-                  title="Search Google Images for &quot;${esc([item.manufacturer, item.name].filter(Boolean).join(" "))}&quot;"
-                  onclick="imageSearch('${esc(item.name)}', '${esc(item.manufacturer)}')"
-                >${ICON_SEARCH}</button>
-              </div>
-            </td>
-            <td class="mono">${esc(item.sku) || "—"}</td>
-            <td><span class="loc">${esc(item.location) || "—"}</span></td>
-            <td>
-              <div class="qty-wrap">
-                <button class="qty-btn" onclick="changeQty('${item.id}', -1)" ${item.qty <= 0 ? "disabled" : ""}>−</button>
-                <span class="qty-num">${item.qty}</span>
-                <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
-              </div>
-            </td>
-            <td><span class="badge badge-${s}">${STATUS_LABELS[s]}</span></td>
-            <td>${esc(item.manufacturer) || "—"}</td>
-            <td>${esc(item.supplier1) || "—"}</td>
-            <td>${esc(item.supplier2) || "—"}</td>
-            <td>${urlCell}</td>
-            <td>${item.unitCost ? "$" + Number(item.unitCost).toFixed(2) : "—"}</td>
-            <td>${item.min}</td>
-            <td style="color: var(--muted); font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(item.notes) || ""}</td>
-            <td>
-              <div class="row-actions">
-                <button class="icon-btn" title="Edit" onclick="openEdit('${item.id}')">✎</button>
-                <button class="icon-btn del" title="Delete" onclick="deleteItem('${item.id}')">✕</button>
-              </div>
-            </td>
-          </tr>
-        `;
+              <tr>
+                <td>
+                  <div class="name-cell">
+                    ${esc(item.name)}
+                    <button
+                      class="cell-icon-btn"
+                      title="Search Google Images for &quot;${esc([item.manufacturer, item.name].filter(Boolean).join(" "))}&quot;"
+                      onclick="imageSearch('${esc(item.name)}', '${esc(item.manufacturer)}')"
+                    >${ICON_SEARCH}</button>
+                  </div>
+                </td>
+                <td style="font-size:13px; color: var(--muted);">${esc(item.type) || "—"}</td>
+                <td style="font-size:13px; color: var(--muted);">${esc(item.condition) || "—"}</td>
+                <td style="font-size:13px; color: var(--muted);">${esc(item.unit) || "—"}</td>
+                <td class="mono">${esc(item.sku) || "—"}</td>
+                <td class="mono">${esc(item.mpn) || "—"}</td>
+                <td><span class="loc">${esc(item.location) || "—"}</span></td>
+                <td>
+                  <div class="qty-wrap">
+                    <button class="qty-btn" onclick="changeQty('${item.id}', -1)" ${item.qty <= 0 ? "disabled" : ""}>−</button>
+                    <span class="qty-num">${item.qty}</span>
+                    <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
+                  </div>
+                </td>
+                <td><span class="badge badge-${s}">${STATUS_LABELS[s]}</span></td>
+                <td>${esc(item.manufacturer) || "—"}</td>
+                <td>${esc(item.supplier1) || "—"}</td>
+                <td>${esc(item.supplier2) || "—"}</td>
+                <td>${urlCell}</td>
+                <td>${item.unitCost ? "$" + Number(item.unitCost).toFixed(2) : "—"}</td>
+                <td>${item.min}</td>
+                <td style="color: var(--muted); font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(item.notes) || ""}</td>
+                <td>
+                  <div class="row-actions">
+                    <button class="icon-btn" title="Edit" onclick="openEdit('${item.id}')">✎</button>
+                    <button class="icon-btn del" title="Delete" onclick="deleteItem('${item.id}')">✕</button>
+                  </div>
+                </td>
+              </tr>
+            `;
           })
           .join("");
 
@@ -1019,17 +1047,21 @@
       // ============================================================
 
       function clearForm() {
-        document.getElementById("fName").value = "";
-        document.getElementById("fSKU").value = "";
-        document.getElementById("fLoc").value = "";
-        document.getElementById("fQty").value = 0;
-        document.getElementById("fMin").value = 5;
+        document.getElementById("fName").value         = "";
+        document.getElementById("fType").value         = "Inventory Item";
+        document.getElementById("fCondition").value    = "Unknown";
+        document.getElementById("fUnit").value         = "Each";
+        document.getElementById("fSKU").value          = "";
+        document.getElementById("fMPN").value          = "";
+        document.getElementById("fLoc").value          = "";
+        document.getElementById("fQty").value          = 0;
+        document.getElementById("fMin").value          = 1;
+        document.getElementById("fUnitCost").value     = "";
         document.getElementById("fManufacturer").value = "";
-        document.getElementById("fSupplier1").value = "";
-        document.getElementById("fSupplier2").value = "";
-        document.getElementById("fUrl").value = "";
-        document.getElementById("fUnitCost").value = "";
-        document.getElementById("fNotes").value = "";
+        document.getElementById("fSupplier1").value    = "";
+        document.getElementById("fSupplier2").value    = "";
+        document.getElementById("fUrl").value          = "";
+        document.getElementById("fNotes").value        = "";
       }
 
       function openAdd() {
@@ -1046,18 +1078,21 @@
         if (!item) return;
 
         document.getElementById("modalTitle").textContent = "Edit item";
-        document.getElementById("fName").value = item.name || "";
-        document.getElementById("fSKU").value = item.sku || "";
-        document.getElementById("fLoc").value = item.location || "";
-        document.getElementById("fQty").value = item.qty;
-        document.getElementById("fMin").value = item.min;
-        document.getElementById("fManufacturer").value =
-          item.manufacturer || "";
-        document.getElementById("fSupplier1").value = item.supplier1 || "";
-        document.getElementById("fSupplier2").value = item.supplier2 || "";
-        document.getElementById("fUrl").value = item.url || "";
-        document.getElementById("fUnitCost").value = item.unitCost || "";
-        document.getElementById("fNotes").value = item.notes || "";
+        document.getElementById("fName").value         = item.name         || "";
+        document.getElementById("fType").value         = item.type         || "Inventory Item";
+        document.getElementById("fCondition").value    = item.condition    || "Unknown";
+        document.getElementById("fUnit").value         = item.unit         || "Each";
+        document.getElementById("fSKU").value          = item.sku          || "";
+        document.getElementById("fMPN").value          = item.mpn          || "";
+        document.getElementById("fLoc").value          = item.location     || "";
+        document.getElementById("fQty").value          = item.qty;
+        document.getElementById("fMin").value          = item.min;
+        document.getElementById("fUnitCost").value     = item.unitCost     || "";
+        document.getElementById("fManufacturer").value = item.manufacturer || "";
+        document.getElementById("fSupplier1").value    = item.supplier1    || "";
+        document.getElementById("fSupplier2").value    = item.supplier2    || "";
+        document.getElementById("fUrl").value          = item.url          || "";
+        document.getElementById("fNotes").value        = item.notes        || "";
 
         document.getElementById("overlay").classList.add("open");
       }
@@ -1075,17 +1110,20 @@
 
         const payload = {
           name,
-          sku: document.getElementById("fSKU").value.trim(),
-          location: document.getElementById("fLoc").value.trim(),
-          qty: parseInt(document.getElementById("fQty").value) || 0,
-          min: parseInt(document.getElementById("fMin").value) || 5,
+          type:         document.getElementById("fType").value,
+          condition:    document.getElementById("fCondition").value,
+          unit:         document.getElementById("fUnit").value.trim() || "Each",
+          sku:          document.getElementById("fSKU").value.trim(),
+          mpn:          document.getElementById("fMPN").value.trim(),
+          location:     document.getElementById("fLoc").value.trim(),
+          qty:          parseInt(document.getElementById("fQty").value) || 0,
+          min:          parseInt(document.getElementById("fMin").value) || 1,
+          unitCost:     parseFloat(document.getElementById("fUnitCost").value) || "",
           manufacturer: document.getElementById("fManufacturer").value.trim(),
-          supplier1: document.getElementById("fSupplier1").value.trim(),
-          supplier2: document.getElementById("fSupplier2").value.trim(),
-          url: document.getElementById("fUrl").value.trim(),
-          unitCost:
-            parseFloat(document.getElementById("fUnitCost").value) || "",
-          notes: document.getElementById("fNotes").value.trim(),
+          supplier1:    document.getElementById("fSupplier1").value.trim(),
+          supplier2:    document.getElementById("fSupplier2").value.trim(),
+          url:          document.getElementById("fUrl").value.trim(),
+          notes:        document.getElementById("fNotes").value.trim(),
         };
 
         const saveBtn = document.getElementById("saveBtn");
