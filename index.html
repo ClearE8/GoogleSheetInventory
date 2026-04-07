@@ -749,8 +749,10 @@
     //  Opens a new tab with a Google Images search for the item name.
     // ============================================================
 
-    function imageSearch(name) {
-      const query = encodeURIComponent(name);
+    function imageSearch(name, manufacturer) {
+      // Prepend manufacturer if present, e.g. "DAB esybox mini pump"
+      const combined = [manufacturer, name].filter(Boolean).join(' ');
+      const query    = encodeURIComponent(combined);
       window.open('https://www.google.com/search?tbm=isch&q=' + query, '_blank');
     }
 
@@ -830,8 +832,8 @@
                 ${esc(item.name)}
                 <button
                   class="cell-icon-btn"
-                  title="Search Google Images for &quot;${esc(item.name)}&quot;"
-                  onclick="imageSearch('${esc(item.name)}')"
+                  title="Search Google Images for &quot;${esc([item.manufacturer, item.name].filter(Boolean).join(' '))}&quot;"
+                  onclick="imageSearch('${esc(item.name)}', '${esc(item.manufacturer)}')"
                 >${ICON_SEARCH}</button>
               </div>
             </td>
