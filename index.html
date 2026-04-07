@@ -566,13 +566,14 @@
             <th>Supplier 1</th>
             <th>Supplier 2</th>
             <th>Link</th>
+            <th>Unit Cost</th>
             <th>Min</th>
             <th>Notes</th>
             <th></th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr class="empty-row"><td colspan="12">Connecting to Google Sheets…</td></tr>
+          <tr class="empty-row"><td colspan="13">Connecting to Google Sheets…</td></tr>
         </tbody>
       </table>
     </div>
@@ -608,6 +609,10 @@
         <div class="field">
           <label>Low stock threshold</label>
           <input id="fMin" type="number" min="0" value="5">
+        </div>
+        <div class="field">
+          <label>Unit cost ($)</label>
+          <input id="fUnitCost" type="number" min="0" step="0.01" placeholder="0.00">
         </div>
 
         <!-- Manufacturer & suppliers -->
@@ -802,7 +807,7 @@
       const tbody = document.getElementById('tbody');
 
       if (!filtered.length) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No items found.</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="13">No items found.</td></tr>';
         updateStats();
         return;
       }
@@ -844,6 +849,7 @@
             <td>${esc(item.supplier1) || '—'}</td>
             <td>${esc(item.supplier2) || '—'}</td>
             <td>${urlCell}</td>
+            <td>${item.unitCost ? '$' + Number(item.unitCost).toFixed(2) : '—'}</td>
             <td>${item.min}</td>
             <td style="color: var(--muted); font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(item.notes) || ''}</td>
             <td>
@@ -915,6 +921,7 @@
       document.getElementById('fSupplier1').value    = '';
       document.getElementById('fSupplier2').value    = '';
       document.getElementById('fUrl').value          = '';
+      document.getElementById('fUnitCost').value     = '';
       document.getElementById('fNotes').value        = '';
     }
 
@@ -941,6 +948,7 @@
       document.getElementById('fSupplier1').value    = item.supplier1    || '';
       document.getElementById('fSupplier2').value    = item.supplier2    || '';
       document.getElementById('fUrl').value          = item.url          || '';
+      document.getElementById('fUnitCost').value     = item.unitCost     || '';
       document.getElementById('fNotes').value        = item.notes        || '';
 
       document.getElementById('overlay').classList.add('open');
@@ -967,6 +975,7 @@
         supplier1:    document.getElementById('fSupplier1').value.trim(),
         supplier2:    document.getElementById('fSupplier2').value.trim(),
         url:          document.getElementById('fUrl').value.trim(),
+        unitCost:     parseFloat(document.getElementById('fUnitCost').value) || '',
         notes:        document.getElementById('fNotes').value.trim(),
       };
 
