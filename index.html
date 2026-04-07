@@ -552,13 +552,13 @@
             <th>Name</th>
             <th>SKU</th>
             <th>Location</th>
+            <th>Qty</th>
+            <th>Status</th>
             <th>Manufacturer</th>
             <th>Supplier 1</th>
             <th>Supplier 2</th>
             <th>Link</th>
-            <th>Qty</th>
             <th>Min</th>
-            <th>Status</th>
             <th>Notes</th>
             <th></th>
           </tr>
@@ -824,10 +824,6 @@
             </td>
             <td class="mono">${esc(item.sku) || '—'}</td>
             <td><span class="loc">${esc(item.location) || '—'}</span></td>
-            <td>${esc(item.manufacturer) || '—'}</td>
-            <td>${esc(item.supplier1) || '—'}</td>
-            <td>${esc(item.supplier2) || '—'}</td>
-            <td>${urlCell}</td>
             <td>
               <div class="qty-wrap">
                 <button class="qty-btn" onclick="changeQty('${item.id}', -1)" ${item.qty <= 0 ? 'disabled' : ''}>−</button>
@@ -835,8 +831,12 @@
                 <button class="qty-btn" onclick="changeQty('${item.id}', 1)">+</button>
               </div>
             </td>
-            <td>${item.min}</td>
             <td><span class="badge badge-${s}">${STATUS_LABELS[s]}</span></td>
+            <td>${esc(item.manufacturer) || '—'}</td>
+            <td>${esc(item.supplier1) || '—'}</td>
+            <td>${esc(item.supplier2) || '—'}</td>
+            <td>${urlCell}</td>
+            <td>${item.min}</td>
             <td style="color: var(--muted); font-size: 13px; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${esc(item.notes) || ''}</td>
             <td>
               <div class="row-actions">
