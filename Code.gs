@@ -1,8 +1,8 @@
 // ============================================================
-//  INVENTORY MANAGER — Google Apps Script Backend (v4)
+//  INVENTORY MANAGER — Google Apps Script Backend (v5)
 //  Columns: ID, Name, SKU, Location, Quantity, Min Stock,
-//           Manufacturer, Supplier 1, Supplier 2, URL, Notes,
-//           Last Updated
+//           Manufacturer, Supplier 1, Supplier 2, URL,
+//           Unit Cost, Notes, Last Updated
 //
 //  AFTER UPDATING THIS FILE:
 //  Deploy > Manage deployments > edit (pencil) > New version > Deploy
@@ -22,6 +22,7 @@ const HEADERS = [
   "Supplier 1",
   "Supplier 2",
   "URL",
+  "Unit Cost",
   "Notes",
   "Last Updated",
 ];
@@ -38,7 +39,6 @@ function getOrCreateSheet() {
       .setBackground("#E8F0FE");
     sheet.setFrozenRows(1);
 
-    // Set column widths for readability
     sheet.setColumnWidth(1,  80);   // ID
     sheet.setColumnWidth(2,  200);  // Name
     sheet.setColumnWidth(3,  120);  // SKU
@@ -49,8 +49,9 @@ function getOrCreateSheet() {
     sheet.setColumnWidth(8,  140);  // Supplier 1
     sheet.setColumnWidth(9,  140);  // Supplier 2
     sheet.setColumnWidth(10, 250);  // URL
-    sheet.setColumnWidth(11, 200);  // Notes
-    sheet.setColumnWidth(12, 150);  // Last Updated
+    sheet.setColumnWidth(11, 100);  // Unit Cost
+    sheet.setColumnWidth(12, 200);  // Notes
+    sheet.setColumnWidth(13, 150);  // Last Updated
   }
 
   return sheet;
@@ -99,8 +100,9 @@ function getAllItems() {
       supplier1:    row[7],
       supplier2:    row[8],
       url:          row[9],
-      notes:        row[10],
-      updated:      row[11],
+      unitCost:     row[10],
+      notes:        row[11],
+      updated:      row[12],
     }))
   };
 }
@@ -121,6 +123,7 @@ function addItem(p) {
     p.supplier1    || "",
     p.supplier2    || "",
     p.url          || "",
+    p.unitCost !== "" ? Number(p.unitCost) : "",
     p.notes        || "",
     new Date().toLocaleString(),
   ]);
@@ -135,7 +138,7 @@ function updateItem(p) {
 
   for (let i = 1; i < rows.length; i++) {
     if (String(rows[i][0]) === String(p.id)) {
-      sheet.getRange(i + 1, 2, 1, 11).setValues([[
+      sheet.getRange(i + 1, 2, 1, 12).setValues([[
         p.name         || "",
         p.sku          || "",
         p.location     || "",
@@ -145,6 +148,7 @@ function updateItem(p) {
         p.supplier1    || "",
         p.supplier2    || "",
         p.url          || "",
+        p.unitCost !== "" ? Number(p.unitCost) : "",
         p.notes        || "",
         new Date().toLocaleString(),
       ]]);
@@ -179,7 +183,7 @@ function updateQty(id, delta) {
     if (String(rows[i][0]) === String(id)) {
       const newQty = Math.max(0, Number(rows[i][4]) + delta);
       sheet.getRange(i + 1, 5).setValue(newQty);
-      sheet.getRange(i + 1, 12).setValue(new Date().toLocaleString());
+      sheet.getRange(i + 1, 13).setValue(new Date().toLocaleString());
       return { success: true, qty: newQty };
     }
   }
