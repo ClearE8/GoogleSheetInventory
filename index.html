@@ -949,7 +949,7 @@
           const matchesSearch =
             !searchQuery ||
             searchFields.some((f) =>
-              (f || "").toLowerCase().includes(searchQuery),
+              String(f || "").toLowerCase().includes(searchQuery),
             );
 
           const matchesFilter =
